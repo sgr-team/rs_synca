@@ -1,0 +1,12 @@
+[package]
+name = "synca"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = { version = "2.0.23", features = [ "full", "fold", "extra-traits" ] }
+quote = "1.0.29"
+proc-macro2 = "1.0.69"
