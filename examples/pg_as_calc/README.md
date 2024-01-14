@@ -31,7 +31,7 @@ tokio = [ "dep:tokio", "dep:tokio-postgres" ]
 // lib.rs
 
 #[cfg(all(feature = "sync", feature = "tokio"))]
-compile_error!(r#"feature "sync" and feature "tokio" cannot be enabled at the same time"#);
+compile_error!(r#"feature "sync" and feature "tokio" cannot be both enabled at the same time"#);
 ```
 
 ### Require that either sync or tokyo be selected
@@ -45,8 +45,8 @@ compile_error!(r#"one of the "sync" and "tokio" features must be enabled"#);
 
 ## Declaring the structure
 
-For synchronous implementation class postgres::Client will be used, 
-and for asynchronous implementation class tokio_postgres::Client.
+Synchronous implementation uses class postgres::Client, 
+and asynchronous implementation uses class tokio_postgres::Client.
 
 ```rust
 #[synca(
@@ -78,7 +78,7 @@ impl Calc {
 
 ## Tests
 
-All asynchronous functions will become synchronous, without the "tokyo" feature enabled.
+All asynchronous functions will become synchronous without the "tokyo" feature enabled.
 
 Don't forget to add CI scripts
 
