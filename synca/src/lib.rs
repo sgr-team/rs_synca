@@ -2,68 +2,43 @@
 //! 
 //! Write asynchronous code, and synca will create a synchronous version.
 //! 
-//! ## Examples
+//! Macro synca::synca can be applied to the declaration of structures, enums, implementations, traits, 
+//! modules, functions, macros, etc.
 //! 
-//! ### pg_as_calc
+//! The macro generates 2 versions of code: async with attribute #[cfg(feature)] and 
+//! sync with attribute #[cfg(not(feature))].
 //! 
-//! A library that allows you to use Postgres as a calculator
+//! ## Example
 //! 
-//! - [README.md](https://github.com/sgr-team/rs_synca/blob/main/examples/pg_as_calc/README.md)
-//! - [Cargo.toml](https://github.com/sgr-team/rs_synca/blob/main/examples/pg_as_calc/Cargo.toml)
-//! - [src/lib.rs](https://github.com/sgr-team/rs_synca/blob/main/examples/pg_as_calc/src/lib.rs)
-//! 
-//! ## Concept
-//! 
-//! The crate contains one attribute macro "synca" which takes the features expression
-//! and replaceable types and attributes.
-//! 
-//! This macro can be applied to the declaration of structures, enums, implementations, traits, 
-//! modules, functions or macros.
-//! 
-//! ```rust
+//! ```
 //! #[synca::synca(
 //!   feature = "tokio",
 //!   tokio_postgres::Client => postgres::Client,
-//!   tokio_postgres::Error => postgres::Error,
 //!   #[tokio::test] => #[test],
-//! )]
-//! mod my_mod {
-//!   type Err = tokio_postgres::Error;
+//! )] 
+//! mod my_mod { 
+//!   /// MyStruct docs
+//!   /// [synca:sync]
+//!   /// Sync comment
+//!   /// [/synca:sync]
+//!   /// [synca:async]
+//!   /// Async comment
+//!   /// [/synca:async]
+//!   /// 
+//!   /// This struct use [synca:match]tokio_postgres::Client|postgres::Client[/synca:match]
+//!   pub struct MyStruct {
+//!     client: tokio_postgres::Client
+//!   }
 //! 
-//!   pub async fn select(client: &mut tokio_postgres::Client) -> Result<i32, Err> {
-//!     let row = client.query_one("SELECT 1 + 2 result", &[]).await?;
-//! 
-//!     Ok(row.get("result"))
+//!   impl MyStruct {
+//!     async fn query(&mut self) -> i32 {
+//!       let row = self.client.query_one("SQL", &[]).await.unwrap();
+//!       
+//!       row.get("result")
+//!     }
 //!   }
 //! }
 //! ```
-//! 
-//! The macro generates the next code:
-//! 
-//! ```rust
-//! #[cfg(not(feature = "tokio"))]
-//! mod my_mod {
-//!   type Err = postgres::Error;
-//! 
-//!   pub fn select(client: &mut postgres::Client) -> Result<i32, Err> {
-//!     let row = client.query_one("SELECT 1 + 2 result", &[])?;
-//! 
-//!     Ok(row.get("result"))
-//!   }
-//! }
-//! 
-//! #[cfg(feature = "tokio")]
-//! mod my_mod {
-//!   type Err = tokio_postgres::Error;
-//! 
-//!   pub async fn select(client: &mut tokio_postgres::Client) -> Result<i32, Err> {
-//!     let row = client.query_one("SELECT 1 + 2 result", &[]).await?;
-//! 
-//!     Ok(row.get("result"))
-//!   }
-//! }
-//! ```
-
 mod attr;
 mod docs;
 mod fold_async;

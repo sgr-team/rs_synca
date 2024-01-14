@@ -591,7 +591,7 @@ dependencies = [
 
 [[package]]
 name = "synca"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "postgres",
  "proc-macro2",
