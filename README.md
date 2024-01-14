@@ -2,6 +2,10 @@
 
 Write asynchronous code, and synca will create a synchronous version.
 
+## Docs
+
+[docs.rs](https://docs.rs/synca/latest/synca/)
+
 ## Examples
 
 ### pg_as_calc
