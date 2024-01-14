@@ -3,19 +3,25 @@ use std::collections::HashMap;
 use quote::ToTokens;
 use syn::{
   fold::{self, Fold},
-  Expr, ExprBlock, Type, Attribute
+  Expr, ExprBlock, Type, Attribute, Item, ItemFn
 };
 
-pub struct SyncAFold {
+use crate::docs::Docs;
+
+pub struct SyncFold {
   pub types: HashMap<String, Type>,
   pub attributes: HashMap<String, Attribute>,
 }
 
-impl Fold for SyncAFold {
-  fn fold_item_fn(&mut self, i: syn::ItemFn) -> syn::ItemFn {
+impl Fold for SyncFold {
+  fn fold_item(&mut self, i: Item) -> Item {
+    fold::fold_item(self, Docs::process_item(i, true))
+  }
+
+  fn fold_item_fn(&mut self, i: ItemFn) -> ItemFn {
     let mut new_fn = i.clone();
     new_fn.sig.asyncness = None;
-
+    
     fold::fold_item_fn(self, new_fn)
   }
 
@@ -62,6 +68,7 @@ impl Fold for SyncAFold {
     let mut new_attr = i;
     if let Some(x) = self.attributes.get(&new_attr.clone().to_token_stream().to_string()) {
       new_attr = x.clone();
+      return fold::fold_attribute(self, new_attr);
     }
 
     fold::fold_attribute(self, new_attr)
@@ -82,9 +89,10 @@ impl Fold for SyncAFold {
 mod tests {
   use std::collections::HashMap;
 
-  use syn::{parse_quote, fold::Fold};
+  use quote::ToTokens;
+  use syn::{parse_quote, fold::Fold, Item};
 
-  use super::SyncAFold;
+  use super::SyncFold;
 
   #[test]
   fn fold_enum() {
@@ -261,8 +269,33 @@ mod tests {
     );
   }
 
-  fn create_synca_fold() -> SyncAFold {
-    SyncAFold { 
+  #[test]
+  fn fold_fn_docs() {
+    assert_eq!(
+      create_synca_fold().fold_item(parse_quote!(
+        /// # My header
+        /// 
+        /// Any text
+        /// [synca::sync]
+        /// sync text
+        /// [/synca::sync]
+        /// [synca::async]
+        /// async text
+        /// [/synca::async]
+        pub fn any() { }
+      )).into_token_stream().to_string(),
+      {
+        let result: Item = parse_quote!(
+          #[doc = " # My header\n \n Any text\n sync text"]
+          pub fn any() { }
+        );
+        result.into_token_stream().to_string()
+      }
+    );
+  }
+
+  fn create_synca_fold() -> SyncFold {
+    SyncFold { 
       types: HashMap::from([ 
         ("tokio_postgres :: Client".into(), parse_quote!(postgres::Client)),
         ("tokio_postgres :: NoTls".into(), parse_quote!(postgres::NoTls)),

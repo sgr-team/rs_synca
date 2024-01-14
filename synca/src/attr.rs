@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use quote::ToTokens;
 use syn::{Expr, Type, parse::Parse, Token, Attribute};
 
-use crate::fold::SyncAFold;
+use crate::fold_sync::SyncFold;
 
 #[derive(Debug, PartialEq)]
 pub struct SyncAAttribute {
@@ -13,8 +13,8 @@ pub struct SyncAAttribute {
 }
 
 impl SyncAAttribute {
-  pub fn fold(self) -> SyncAFold {
-    SyncAFold { types: self.types, attributes: self.attributes }
+  pub fn fold(self) -> SyncFold {
+    SyncFold { types: self.types, attributes: self.attributes }
   }
 }
 

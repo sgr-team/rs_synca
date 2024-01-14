@@ -65,8 +65,11 @@
 //! ```
 
 mod attr;
-mod fold;
+mod docs;
+mod fold_async;
+mod fold_sync;
 
+use fold_async::AsyncFold;
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, fold::Fold, Item};
 use quote::quote;
@@ -113,11 +116,13 @@ pub fn synca(attr: TokenStream, input: TokenStream) -> TokenStream {
   let features = attr.features.clone();
   
   let item: Item = parse_macro_input!(input);
+  
+  let item_async = Fold::fold_item(&mut AsyncFold::new(), item.clone());
   let item_sync = Fold::fold_item(&mut attr.fold(), item.clone());
   
   quote! {
     #[cfg(#features)]
-    #item
+    #item_async
 
     #[cfg(not(#features))]
     #item_sync
