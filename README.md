@@ -1,6 +1,6 @@
 # SyncA
 
-Write asynchronous code, and SyncA will create a synchronous version.
+Write asynchronous code, and synca will create a synchronous version.
 
 ## How to use
 
