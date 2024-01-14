@@ -593,9 +593,11 @@ dependencies = [
 name = "synca"
 version = "0.1.0"
 dependencies = [
+ "postgres",
  "proc-macro2",
  "quote",
  "syn",
+ "tokio-postgres",
 ]
 
 [[package]]
