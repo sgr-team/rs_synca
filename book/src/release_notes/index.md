@@ -1,6 +1,6 @@
 # Release Notes
 
-## 0.4.1 Release candidate [1.0.0] (21.01.2024)
+## 0.4.1 Release candidate [1.0.0] (25.01.2024)
 
 - Added [book](https://synca.sgr-team.dev)
 - Added virtaul attributes
