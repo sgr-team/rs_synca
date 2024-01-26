@@ -593,10 +593,12 @@ dependencies = [
 name = "synca"
 version = "0.4.1"
 dependencies = [
+ "async-trait",
  "postgres",
  "proc-macro2",
  "quote",
  "syn",
+ "tokio",
  "tokio-postgres",
 ]
 

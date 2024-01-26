@@ -1,0 +1,18 @@
+[book]
+title = "SyncA book"
+description = "A book on how to turn asynchronous code into synchronous"
+authors = ["dbalakov"]
+language = "en"
+multilingual = false
+src = "src"
+site-url="https://synca.sgr-team.dev/"
+
+[output.html]
+default-theme = "navy"
+preferred-dark-theme = "navy"
+curly-quotes = true
+mathjax-support = false
+copy-fonts = true
+no-section-label = false
+git-repository-url = "https://github.com/sgr-team/rs_synca"
+git-repository-icon = "fa-github"

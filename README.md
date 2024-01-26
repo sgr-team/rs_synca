@@ -4,7 +4,8 @@ Write asynchronous code, and synca will create a synchronous version.
 
 ## Docs
 
-[docs.rs](https://docs.rs/synca/latest/synca/)
+- [Book](https://synca.sgr-team.dev)
+- [docs.rs](https://docs.rs/synca/latest/synca/)
 
 ## Examples
 
