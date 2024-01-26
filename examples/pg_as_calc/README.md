@@ -20,7 +20,7 @@ Describes features
 // Cargo.toml
 
 [features]
-default = [ "tokio" ]
+default = [ "sync" ]
 sync = [ "dep:postgres" ]
 tokio = [ "dep:tokio", "dep:tokio-postgres" ]
 ```

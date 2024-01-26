@@ -22,16 +22,16 @@ impl Calc {
   pub async fn connect<T: Into<String>>(connection_string: T) -> Result<Self, tokio_postgres::Error> {
     let conn_str = connection_string.into();
 
-    #[cfg(feature = "tokio")]
+    #[synca::only(async)]
     let (client, connection) = tokio_postgres::connect(&conn_str, tokio_postgres::NoTls).await?;
-    #[cfg(feature = "tokio")]
+    #[synca::only(async)]
     tokio::spawn(async move {
       if let Err(e) = connection.await {
         eprintln!("connection error: {}", e);
       }
     });
 
-    #[cfg(not(feature = "tokio"))]
+    #[synca::only(sync)]
     let client = postgres::Client::connect(&conn_str, postgres::NoTls)?;
 
     Ok(Self { client })

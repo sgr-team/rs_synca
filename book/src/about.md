@@ -2,11 +2,7 @@
 
 SyncA is a framework for creating crates with both synchronous and asynchronous versions.
 
-# Docs
-
-[SyncA Book](https://synca.sgr-team.dev)
-
-# Motivation
+## Motivation
 
 When we write a library, we cannot control the environment in which our code will be used.
 
@@ -16,14 +12,14 @@ If the problems of the first solution are obvious, then the second leads to a vi
 
 SyncA solves this problem by hiding the asynchronous implementation behind a feature.
 
-# Concept
+## Concept
 
 One macro for everything.
 
 The macro synca::synca generates 2 versions of code: async with attribute #[cfg(feature)] and 
 sync with attribute #[cfg(not(feature))].
 
-# Full example
+## Full example
 
 ```rust
 /// # synca
@@ -85,6 +81,7 @@ mod tests {
 pub trait MyTrait { 
   async fn get_name(client: &mut tokio_postgres::Client);
 }
+
 
 /// # Docs
 /// 

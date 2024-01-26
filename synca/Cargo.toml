@@ -1,11 +1,14 @@
 [package]
 name = "synca"
-version = "0.4.0"
+authors = [ "Dmitry Balakov <balakovdmitry@gmail.com>" ]
+version = "0.4.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/sgr-team/rs_synca"
 description = "Write asynchronous code, and synca will create a synchronous version."
 readme = "README.md"
+keywords = [ "synca", "sgr", "async", "sync", "tokio" ]
+categories = [ "asynchronous", "development-tools::procedural-macro-helpers" ]
 
 [lib]
 proc-macro = true
@@ -18,3 +21,5 @@ proc-macro2 = "1.0.69"
 [dev-dependencies]
 postgres = { version = "0.19.7" }
 tokio-postgres = { version = "0.7.10" }
+tokio = { version = "1.35.1", features = [ "full" ] }
+async-trait = "0.1.77"
