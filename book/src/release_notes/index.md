@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.4.2 Release candidate II [1.0.0]
+
+- Additive features [https://github.com/sgr-team/rs_synca/issues/3]
+
 ## 0.4.1 Release candidate [1.0.0] (25.01.2024)
 
 - Added [book](https://synca.sgr-team.dev)
@@ -19,5 +23,3 @@
 ## 0.1.0 birth (14.01.2024)
 
 - Added macros synca::synca
-
-

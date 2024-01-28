@@ -19,22 +19,3 @@ mod tests {
   }
 }
 ```
-
-## (Async/Sync) only
-
-Allows you to leave a marked item in only one of the code versions.
-
-```rust
-#[synca::synca(feature = "tokio")] 
-mod my_mod {
-  #[synca::only(async)]
-  pub async fn connect() { 
-    // async code here
-  }
-
-  #[synca::only(sync)]
-  pub fn connect() { 
-    // sync code here
-  }
-}
-```

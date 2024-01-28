@@ -5,11 +5,13 @@ use syn::{fold::{self, Fold}, Expr};
 
 use crate::SyncAFoldAttributes;
 
+#[derive(Debug, PartialEq)]
 pub struct SyncAFold {
+  pub module_name: String,
   pub is_async: bool,
-  pub features: Expr,
   pub types: HashMap<syn::Type, syn::Type>,
   pub attributes: HashMap<syn::Attribute, syn::Attribute>,
+  pub cfg: Expr
 }
 
 macro_rules! impl_fold_fn {
@@ -18,8 +20,8 @@ macro_rules! impl_fold_fn {
       let attrs = SyncAFoldAttributes::new(&self, &i.attrs);
       if attrs.ignored { 
         return i;
-      } 
-    
+      }
+
       let mut new_fn = i.clone();
       new_fn.attrs = attrs.new_attrs;
       if !self.is_async {
@@ -352,8 +354,54 @@ mod tests {
     );
   }
 
+  #[test]
+  fn synca_only() {
+    assert_as_str!(
+      fold_item_mod, 
+      syn::ItemMod,
+      parse_quote!(
+        /// # my_mod
+        /// 
+        /// - [synca::match]tokio_postgres::Client|postgres::Client[/synca::match]
+        mod my_mod {
+          type Client = tokio_postgres::Client;
+          
+          async fn name() -> String {
+            #[synca::cfg(tokio)]
+            return "tokio_42".into();
+            #[synca::cfg(sync)]
+            return "sync_42".into();
+          }
+        }
+      ),
+      parse_quote!(
+        #[doc = " # my_mod\n \n - tokio_postgres::Client"]
+        mod my_mod {
+          type Client = tokio_postgres::Client;
+          
+          async fn name() -> String {
+            return "tokio_42".into();
+            #[cfg(all(feature = "tokio", not(feature = "tokio")))]
+            return "sync_42".into();
+          }
+        }
+      ),
+      parse_quote!(
+        #[doc = " # my_mod\n \n - postgres::Client"]
+        mod my_mod {
+          type Client = postgres::Client;
+          
+          fn name() -> String {
+            #[cfg(all(feature = "sync", not(feature = "sync")))]
+            return "tokio_42".into();
+            return "sync_42".into();
+          }
+        }
+      )
+    );
+  }
+
   fn synca_fold() -> (SyncAFold, SyncAFold) {
-    let features: syn::Expr = parse_quote!(feature = "async");
     let types: HashMap<syn::Type, syn::Type> = HashMap::from([
       (parse_quote!(tokio_postgres::Client), parse_quote!(postgres::Client)),
       (parse_quote!(tokio_postgres::NoTls), parse_quote!(postgres::NoTls)),
@@ -364,16 +412,18 @@ mod tests {
     
     (
       SyncAFold {
+        module_name: "tokio".into(),
         is_async: true,
-        features: features.clone(),
         types: types.clone(),
         attributes: attributes.clone(),
+        cfg: parse_quote!(feature = "tokio")
       },
       SyncAFold {
+        module_name: "sync".into(),
         is_async: false,
-        features,
         types,
         attributes,
+        cfg: parse_quote!(feature = "sync")
       }
     )
   }

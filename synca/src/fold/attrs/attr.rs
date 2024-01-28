@@ -1,12 +1,11 @@
-use syn::{parse_quote, Attribute};
+use syn::{parse_quote, Attribute, Ident};
 
 #[derive(Debug, PartialEq)]
 pub enum SyncAAttribute {
   Other(Attribute),
+  Cfg(Ident),
   Doc(String),
   Ignore,
-  OnlyAsync,
-  OnlySync,
 }
 
 impl From<Attribute> for SyncAAttribute {
@@ -15,12 +14,9 @@ impl From<Attribute> for SyncAAttribute {
       return SyncAAttribute::Ignore;
     }
 
-    if value == parse_quote!(#[synca::only(async)]) {
-      return SyncAAttribute::OnlyAsync;
-    }
-
-    if value == parse_quote!(#[synca::only(sync)]) {
-      return SyncAAttribute::OnlySync;
+    if value.path() == &parse_quote!(synca::cfg) {
+      let i: Ident = value.parse_args().unwrap();
+      return SyncAAttribute::Cfg(i.clone());
     }
 
     let name_value = match &value.meta {
@@ -58,6 +54,13 @@ mod from {
   }
 
   #[test]
+  fn cfg() {
+    let attr: Attribute = parse_quote!(#[synca::cfg(tokio)]);
+
+    assert_eq!(SyncAAttribute::from(attr), SyncAAttribute::Cfg(parse_quote!(tokio)));
+  }
+
+  #[test]
   fn doc() {
     let attr: Attribute = parse_quote!(#[doc = "my text"]);
 
@@ -69,19 +72,5 @@ mod from {
     let attr: Attribute = parse_quote!(#[synca::ignore]);
 
     assert_eq!(SyncAAttribute::from(attr.clone()), SyncAAttribute::Ignore);
-  }
-
-  #[test]
-  fn only_async() {
-    let attr: Attribute = parse_quote!(#[synca::only(async)]);
-
-    assert_eq!(SyncAAttribute::from(attr.clone()), SyncAAttribute::OnlyAsync);
-  }
-
-  #[test]
-  fn only_sync() {
-    let attr: Attribute = parse_quote!(#[synca::only(sync)]);
-
-    assert_eq!(SyncAAttribute::from(attr.clone()), SyncAAttribute::OnlySync);
   }
 }

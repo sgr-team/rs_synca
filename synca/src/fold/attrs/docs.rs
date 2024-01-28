@@ -212,9 +212,9 @@ mod docs_attribute {
 
   fn process(s: &str) -> (Option<Attribute>, Option<Attribute>) {
     (
-      SyncAFoldAttributes { is_async: true, ignored: true, only_async: true, only_sync: true, new_attrs: vec![] }
+      SyncAFoldAttributes { is_async: true, ignored: true, new_attrs: vec![] }
         .docs_attribute(s.split("\n").map(|x| x.into()).collect()),
-      SyncAFoldAttributes { is_async: false, ignored: true, only_async: true, only_sync: true, new_attrs: vec![] }
+      SyncAFoldAttributes { is_async: false, ignored: true, new_attrs: vec![] }
         .docs_attribute(s.split("\n").map(|x| x.into()).collect())
     )
   }
@@ -265,9 +265,9 @@ mod process_str {
 
   fn process(s: &str) -> (String, String) {
     (
-      SyncAFoldAttributes { is_async: true, ignored: true, only_async: true, only_sync: true, new_attrs: vec![] }
+      SyncAFoldAttributes { is_async: true, ignored: true, new_attrs: vec![] }
         .process_str(s.into()),
-      SyncAFoldAttributes { is_async: false, ignored: true, only_async: true, only_sync: true, new_attrs: vec![] }
+      SyncAFoldAttributes { is_async: false, ignored: true, new_attrs: vec![] }
         .process_str(s.into())
     )
   }

@@ -6,10 +6,10 @@ The module allows to use Postgres as a calculator. Contains two features: sync &
 
 ```
 // For sync use
-synca_example_pg_as_calc = { version = "0.1.0", default-features = false, features = [ "sync" ] }
+synca_example_pg_as_calc = { version = "0.1.0", features = [ "sync" ] }
 
 // For async use
-synca_example_pg_as_calc = { version = "0.1.0", default-features = false, features = [ "tokio" ] }
+synca_example_pg_as_calc = { version = "0.1.0", features = [ "tokio" ] }
 ```
 
 ## Features
@@ -20,27 +20,9 @@ Describes features
 // Cargo.toml
 
 [features]
-default = [ "sync" ]
+default = [ ]
 sync = [ "dep:postgres" ]
 tokio = [ "dep:tokio", "dep:tokio-postgres" ]
-```
-
-### We prohibit enabling both features at the same time
-
-```rust
-// lib.rs
-
-#[cfg(all(feature = "sync", feature = "tokio"))]
-compile_error!(r#"feature "sync" and feature "tokio" cannot be both enabled at the same time"#);
-```
-
-### Require that either sync or tokyo be selected
-
-```rust
-// lib.rs
-
-#[cfg(all(not(feature = "sync"), not(feature = "tokio")))]
-compile_error!(r#"one of the "sync" and "tokio" features must be enabled"#);
 ```
 
 ## Declaring the structure
@@ -50,11 +32,22 @@ and asynchronous implementation uses class tokio_postgres::Client.
 
 ```rust
 #[synca(
-  feature = "tokio",
-  tokio_postgres::Client => postgres::Client
+  #[cfg(feature = "tokio")]
+  pub mod tokio { },
+  #[cfg(feature = "sync")]
+  pub mod sync { 
+    sync!();
+    replace!(
+      tokio_postgres::Client => postgres::Client,
+      tokio_postgres::Error => postgres::Error,
+      #[tokio::test] => #[test]
+    );
+  }
 )]
-pub struct Calc {
-  client: tokio_postgres::Client
+pub mod synca_mod {
+  pub struct Calc {
+    client: tokio_postgres::Client
+  }
 }
 ```
 
@@ -63,10 +56,6 @@ pub struct Calc {
 All asynchronous functions will become synchronous
 
 ```rust
-#[synca(
-  feature = "tokio",
-  tokio_postgres::Error => postgres::Error
-)]
 impl Calc {
   pub async fn calc(&mut self, s: &str) -> Result<i32, tokio_postgres::Error> {
     let row = self.client.query_one(&format!("SELECT {} result", s), &[]).await?;
@@ -90,9 +79,17 @@ cargo test --no-default-features --features=tokio
 ```rust
 #[cfg(test)]
 #[synca(
-  feature = "tokio",
-  tokio_postgres::Error => postgres::Error,
-  #[tokio::test] => #[test],
+  #[cfg(feature = "tokio")]
+  pub mod tokio { },
+  #[cfg(feature = "sync")]
+  pub mod sync { 
+    sync!();
+    replace!(
+      tokio_postgres::Client => postgres::Client,
+      tokio_postgres::Error => postgres::Error,
+      #[tokio::test] => #[test]
+    );
+  }
 )]
 mod tests {
   #[tokio::test]
