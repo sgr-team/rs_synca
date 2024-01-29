@@ -2,6 +2,11 @@
 
 SyncA is a framework for creating crates with both synchronous and asynchronous versions.
 
+## Docs
+
+- [Book](https://synca.sgr-team.dev)
+- [docs.rs](https://docs.rs/synca/latest/synca/)
+
 ## Motivation
 
 When we write a library, we cannot control the environment in which our code will be used.

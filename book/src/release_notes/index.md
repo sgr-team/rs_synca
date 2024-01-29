@@ -1,5 +1,9 @@
 # Release Notes
 
+## 0.5.3 Release candidate V [1.0.0] (28.01.2024)
+
+- fixed docs
+
 ## 0.5.2 Release candidate IV [1.0.0] (28.01.2024)
 
 - fixed docs
