@@ -1,38 +1,50 @@
 # Traits
 
-SyncA allows you to turn asynchronous traits into synchronous ones.
+For modules with the sync modifier, the asyncness attribute will be removed 
+from all trait functions.
 
-Supported [async-trait](https://github.com/dtolnay/async-trait).
+Tested with [async-trait](https://github.com/dtolnay/async-trait).
 
 ```rust
 #[synca::synca(
-  feature = "tokio",
-  tokio_postgres::Client => postgres::Client,
+  #[cfg(feature = "tokio")]
+  pub mod tokio { },
+  #[cfg(feature = "sync")]
+  pub mod sync { 
+    sync!();
+    replace!(tokio_postgres::Client => postgres::Client);
+  }
 )]
-trait MyTrait {
-  type Client = tokio_postgres::Client;
+mod exemple {
+  trait MyTrait {
+    type Client = tokio_postgres::Client;
 
-  fn new() -> Self;
-  async fn select() -> String;
+    fn new() -> Self;
+    async fn select() -> String;
+  }
 }
 ```
 
 ## Generated code
 
 ```rust
-#[cfg(not(feature = "tokio"))]
-trait MyTrait {
-  type Client = postgres::Client;
+#[cfg(feature = "tokio")]
+pub mod tokio {
+  trait MyTrait {
+    type Client = tokio_postgres::Client;
 
-  fn new() -> Self;
-  fn select() -> String;
+    fn new() -> Self;
+    async fn select() -> String;
+  }
 }
 
-#[cfg(feature = "tokio")]
-trait MyTrait {
-  type Client = tokio_postgres::Client;
+#[cfg(feature = "sync")]
+pub mod sync {
+  trait MyTrait {
+    type Client = postgres::Client;
 
-  fn new() -> Self;
-  async fn select() -> String;
+    fn new() -> Self;
+    fn select() -> String;
+  }
 }
 ```

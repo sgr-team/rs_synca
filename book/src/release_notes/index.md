@@ -1,6 +1,9 @@
 # Release Notes
 
-## 0.4.2 Release candidate II [1.0.0]
+## 0.5.0 Release candidate II [1.0.0]
+
+*Breaking changes: The transition from the idea of "one async feature" 
+to the "creation modules based on based"*
 
 - Additive features [https://github.com/sgr-team/rs_synca/issues/3]
 

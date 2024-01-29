@@ -1,6 +1,4 @@
-use synca::synca;
-
-#[synca(
+#[synca::synca(
   #[cfg(feature = "tokio")]
   pub mod tokio { },
   #[cfg(feature = "sync")]
@@ -38,8 +36,11 @@ mod calc {
       Ok(Self { client })
     }
   
-    pub async fn calc(&mut self, s: &str) -> Result<i32, tokio_postgres::Error> {
-      let row = self.client.query_one(&format!("SELECT {} result", s), &[]).await?;
+    pub async fn calc(&mut self, eval_str: &str) -> Result<i32, tokio_postgres::Error> {
+      let row = self.client.query_one(
+        &format!("SELECT {} result", eval_str), 
+        &[]
+      ).await?;
   
       Ok(row.get("result"))
     }

@@ -3,6 +3,10 @@
 SyncA contains a documentation processor that allows you to generate 
 two versions of documentation: for synchronous and asynchronous versions.
 
+## Issues
+
+- [Support multi-mod in docs processor](https://github.com/sgr-team/rs_synca/issues/5)
+
 ## Blocks
 
 To create a synchronous or asynchronous block, use [synca::async] and [synca::sync].

@@ -1,5 +1,8 @@
 # Tests environment
-docker compose -f ./tests/docker-compose.yml up -d
+docker compose -f ./scripts/tests.yml up -d
+
+# sleep
+sleep 5
 
 # synca
 cargo test -p synca
