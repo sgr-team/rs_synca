@@ -1,12 +1,8 @@
-# About
+# SyncA
 
 SyncA is a framework for creating crates with both synchronous and asynchronous versions.
 
-# Docs
-
-[SyncA Book](https://synca.sgr-team.dev)
-
-# Motivation
+## Motivation
 
 When we write a library, we cannot control the environment in which our code will be used.
 
@@ -14,127 +10,151 @@ Often this leads to the fact that there is only a synchronous version, or two di
 If the problems of the first solution are obvious, then the second leads to a violation of the 
 [DRY principle](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
 
-SyncA solves this problem by hiding the asynchronous implementation behind a feature.
+SyncA solves the problem by creating copies of modules.
 
-# Concept
+## Concept
 
-One macro for everything.
+The attribute synca macro is applied to the module that is to be copied. 
+As an argument, it accepts modules that should be created based on the template.
 
-The macro synca::synca generates 2 versions of code: async with attribute #[cfg(feature)] and 
-sync with attribute #[cfg(not(feature))].
+In the body of the module it is possible to describe code modifiers.
 
-# Full example
+### Code Modifiers
+
+- sync - converts module code into a synchronous version
+- replace - replace types and attributes
+
+## Example
 
 ```rust
-/// # synca
-/// 
-/// The macro will create 2 versions of the my_mod
-/// With the asynchrony feature enabled - asynchronous version, 
-/// without it - synchronous.
-#[synca::synca(feature = "async")]
-mod my_mod { }
-
-/// # Functions
-/// 
-/// The macro turns asynchronous functions into synchronous 
-/// implementations - removing all the .await calls
-#[synca::synca(feature = "async")]
-impl MyStruct {
-  pub async fn first_name(&mut self) -> String {
+#[synca::synca(
+  #[cfg(feature = "tokio")]
+  pub mod tokio { },
+  #[cfg(feature = "sync")]
+  pub mod sync { 
+    sync!();
+    replace!(
+      tokio_postgres::Client => postgres::Client,
+      tokio_postgres::Error => postgres::Error,
+      tokio_postgres::NoTls => postgres::NoTls,
+      #[tokio::test] => #[test]
+    );
+  }
+)] 
+mod my_mod { 
+  struct MyStruct {
+    client: tokio_postgres::Client
+  } 
+  
+  pub async fn get_name(client: &mut tokio_postgres::Client) -> String {
     let row = self.client.query_one("SQL", &[]).await.unwrap();
 
     row.get("name")
   }
+
+  #[cfg(test)]
+  mod tests {
+    use super::get_name;
+
+    #[tokio::test]
+    pub async fn get_name_test() {
+      assert_eq!(get_name(&mut client()).await, "My name");
+    }
+
+    fn client() -> tokio_postgres::Client { 
+      #[synca::cfg(tokio)]
+      let (client, connection) = tokio_postgres::connect("CONNECTION_STRING", tokio_postgres::NoTls).await?;
+      #[synca::cfg(tokio)]
+      tokio::spawn(async move {
+        if let Err(e) = connection.await {
+          eprintln!("connection error: {}", e);
+        }
+      });
+
+      #[synca::cfg(sync)]
+      let client = postgres::Client::connect(&conn_str, postgres::NoTls)?;
+
+      client
+    }
+  }
 }
+```
 
-/// # Types
-/// 
-/// synca supports type substitution 
-/// The synchronous version will use type postgres::Client
-#[synca::synca(
-  feature = "async",
-  tokio_postgres::Client => postgres::Client
-)]
-struct MyStruct {
-  client: tokio_postgres::Client
-} 
+Generated code
 
-/// # Tests
-/// 
-/// synca support attributes substitution too.
-/// This allows you to test not only the asynchronous version, but also the synchronous one
-#[synca::synca(
-  feature = "async",
-  tokio_postgres::Client => postgres::Client,
-  #[tokio::test] => #[test]
-)]
-mod tests {
-  #[tokio::test]
-  pub async fn my_test() {
+```rust
+#[cfg(feature = "tokio")]
+pub mod tokio { 
+  struct MyStruct {
+    client: tokio_postgres::Client
+  } 
+  
+  pub async fn get_name(client: &mut tokio_postgres::Client) -> String {
+    let row = self.client.query_one("SQL", &[]).await.unwrap();
 
+    row.get("name")
+  }
+
+  #[cfg(test)]
+  mod tests {
+    use super::get_name;
+
+    #[tokio::test]
+    pub async fn get_name_test() {
+      assert_eq!(get_name(&mut client()).await, "My name");
+    }
+
+    fn client() -> tokio_postgres::Client { 
+      let (client, connection) = tokio_postgres::connect("CONNECTION_STRING", tokio_postgres::NoTls).await?;
+      tokio::spawn(async move {
+        if let Err(e) = connection.await {
+          eprintln!("connection error: {}", e);
+        }
+      });
+
+      #[сfg(all(feature = "tokio", not(feature = "tokio")))]
+      let client = postgres::Client::connect(&conn_str, postgres::NoTls)?;
+
+      client
+    }
   }
 }
 
-/// # Traits
-///
-/// synca also knows how to work with traits
-#[synca::synca(
-  feature = "async",
-  tokio_postgres::Client => postgres::Client,
-)]
-pub trait MyTrait { 
-  async fn get_name(client: &mut tokio_postgres::Client);
-}
+#[cfg(feature = "sync")]
+mod sync { 
+  struct MyStruct {
+    client: postgres::Client
+  } 
+  
+  pub fn get_name(client: &mut postgres::Client) -> String {
+    let row = self.client.query_one("SQL", &[]).unwrap();
 
-/// # Docs
-/// 
-/// synca also contains a documentation processor that allows to generate 
-/// different documentation for the synchronous and asynchronous versions
-/// 
-/// [synca::sync]
-/// It's sync doc
-/// [/synca::sync]
-/// [synca::async]
-/// It's async doc
-/// [/synca::async]
-/// 
-/// # Match
-/// 
-/// You can also use "synca::match" to replace part of a string.
-/// 
-/// Arguments 
-/// - [synca::match]tokio_postgres|postgres[/synca::match]::Client - postgres client
-#[synca::synca(
-  feature = "async",
-  tokio_postgres::Client => postgres::Client,
-)]
-pub async fn my_fn(client: &mut tokio_postgres::Client) { }
-
-/// # Virtual attributes
-/// 
-/// - synca::ignore - ignore in code fold
-/// - synca::sync_only - the code will only be available in the synchronous version
-/// - synca::async_only - the code will only be available in the asynchronous version
-#[synca::synca(
-  feature = "async",
-  tokio_postgres::Client => postgres::Client,
-  #[tokio::test] => #[test],
-)]
-mod my_mod {
-  #[tokio::test]
-  async fn my_test() { 
-    #[synca::ignore]
-    assert_eq!(format!(".aw{}", "ait"), ".await");
+    row.get("name")
   }
 
-  #[test]
-  #[synca::sync_only]
-  fn sync_test() { 
-  }
+  #[cfg(test)]
+  mod tests {
+    use super::get_name;
 
-  #[test]
-  #[synca::async_only]
-  fn async_test() { 
+    #[test]
+    pub async fn get_name_test() {
+      assert_eq!(get_name(&mut client()), "My name");
+    }
+
+    fn client() -> postgres::Client {  
+      #[сfg(all(feature = "tokio", not(feature = "tokio")))]
+      let (client, connection) = tokio_postgres::connect("CONNECTION_STRING", tokio_postgres::NoTls).await?;
+      #[сfg(all(feature = "tokio", not(feature = "tokio")))]
+      tokio::spawn(async move {
+        if let Err(e) = connection.await {
+          eprintln!("connection error: {}", e);
+        }
+      });
+
+      let client = postgres::Client::connect(&conn_str, postgres::NoTls)?;
+
+      client
+    }
   }
 }
 ```

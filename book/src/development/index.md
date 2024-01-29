@@ -26,4 +26,8 @@ To run all tests, use the script ["./tests/run.sh"](https://github.com/sgr-team/
 - Create a commit with the version in the development branch (don't forget to increment version in synca/Cargo.toml)
 - Create a [pull request](https://github.com/sgr-team/rs_synca/pulls) into [main branch](https://github.com/sgr-team/rs_synca/tree/main)
 - Create a git tag that points into the [main branch](https://github.com/sgr-team/rs_synca/tree/main)
-- Publish (cargo publish -p synca --allow-dirty)
+- Publish
+
+```bash
+cargo publish -p synca --allow-dirty
+```

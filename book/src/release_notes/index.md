@@ -1,11 +1,15 @@
 # Release Notes
 
-## 0.5.0 Release candidate II [1.0.0]
+## 0.5.1 Release candidate III [1.0.0] (28.01.2024)
+
+- fixed docs
+
+## 0.5.0 Release candidate II [1.0.0] (28.01.2024)
 
 *Breaking changes: The transition from the idea of "one async feature" 
-to the "creation modules based on based"*
+to the "creation modules based on template"*
 
-- Additive features [https://github.com/sgr-team/rs_synca/issues/3]
+- [Additive features](https://github.com/sgr-team/rs_synca/issues/3)
 
 ## 0.4.1 Release candidate [1.0.0] (25.01.2024)
 
