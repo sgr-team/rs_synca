@@ -1,12 +1,20 @@
 # Functions
 
-Synca will leave synchronous functions unchanged, but will format asynchronous ones.
+For modules with the sync modifier, the asyncness attribute will be removed 
+from all functions and all ".await" expressions will be removed.
 
 ```rust
 #[synca::synca(
-  feature = "tokio",
-  tokio_postgres::Client => postgres::Client,
-  tokio_postgres::Error => postgres::Error,
+  #[cfg(feature = "tokio")]
+  pub mod tokio { },
+  #[cfg(feature = "sync")]
+  pub mod sync { 
+    sync!();
+    replace!(
+      tokio_postgres::Client => postgres::Client,
+      tokio_postgres::Error => postgres::Error,
+    );
+  }
 )]
 mod example {
   pub async fn get_name(
@@ -22,23 +30,23 @@ mod example {
 ## Generated code
 
 ```rust
-#[cfg(not(feature = "tokio"))]
-mod example {
-  pub fn get_name(
-    client: &mut postgres::Client
-  ) -> Result<String, postgres::Error> {
-    let row = client.query_one("SQL", &[]).unwrap();
+#[cfg(feature = "tokio")]
+mod tokio {
+  pub async fn get_name(
+    client: &mut tokio_postgres::Client
+  ) -> Result<String, tokio_postgres::Error> {
+    let row = client.query_one("SQL", &[]).await.unwrap();
 
     row.get("name")
   }
 }
 
-#[cfg(feature = "tokio")]
-mod example {
-  pub async fn get_name(
-    client: &mut tokio_postgres::Client
-  ) -> Result<String, tokio_postgres::Error> {
-    let row = client.query_one("SQL", &[]).await.unwrap();
+#[cfg(feature = "sync")]
+mod sync {
+  pub fn get_name(
+    client: &mut postgres::Client
+  ) -> Result<String, postgres::Error> {
+    let row = client.query_one("SQL", &[]).unwrap();
 
     row.get("name")
   }

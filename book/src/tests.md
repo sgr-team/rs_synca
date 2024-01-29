@@ -5,8 +5,7 @@
 Remember to test both asynchronous and synchronous versions of the code
 
 ```bash
-cargo test --no-default-features --features=sync
-cargo test --no-default-features --features=tokio
+cargo test --no-default-features --features=sync,tokio
 ```
 
 ## Tokio tests
@@ -17,33 +16,17 @@ asynchronous versions of the code.
 [Tokio](https://tokio.rs/) tests example.
 
 ```rust
-#[cfg(test)]
 #[synca::synca(
-  feature = "tokio",
-  #[tokio::test] => #[test]
-)]
-mod tests {
-  #[tokio::test]
-  pub async fn my_test() {
-
+  #[cfg(test)]
+  #[cfg(feature = "tokio")]
+  pub mod tests_tokio { },
+  #[cfg(test)]
+  #[cfg(feature = "sync")]
+  pub mod tests_sync { 
+    sync!();
+    replace!(#[tokio::test] => #[test]);
   }
-}
-```
-
-Generated code
-
-```rust
-#[cfg(test)]
-#[cfg(not(feature = "tokio"))]
-mod tests {
-  #[test]
-  pub fn my_test() {
-
-  }
-}
-
-#[cfg(test)]
-#[cfg(feature = "tokio")]
+)] 
 mod tests {
   #[tokio::test]
   pub async fn my_test() {

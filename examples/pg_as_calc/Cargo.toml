@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = [ "sync" ]
+default = [ ]
 sync = [ "dep:postgres" ]
 tokio = [ "dep:tokio", "dep:tokio-postgres" ]
 

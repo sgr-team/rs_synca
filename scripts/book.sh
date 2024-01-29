@@ -1,0 +1,1 @@
+cd ./book && mdbook serve

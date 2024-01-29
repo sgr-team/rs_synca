@@ -5,18 +5,14 @@ use crate::{SyncAFold, SyncAAttribute};
 pub struct SyncAFoldAttributes {
   pub is_async: bool,
   pub ignored: bool,
-  pub only_async: bool,
-  pub only_sync: bool,
   pub new_attrs: Vec<Attribute>,
 }
 
 impl SyncAFoldAttributes {
   pub fn new(fold: &SyncAFold, attrs: &Vec<Attribute>) -> Self {
     let mut result = SyncAFoldAttributes { 
-      is_async: fold.is_async, 
+      is_async: fold.is_async,
       ignored: false, 
-      only_async: false, 
-      only_sync: false, 
       new_attrs: vec![]
     };
     let mut docs = vec![];
@@ -32,23 +28,18 @@ impl SyncAFoldAttributes {
             }
           );
         },
+        SyncAAttribute::Cfg(x) => {
+          if x != &fold.module_name {
+            let cfg = &fold.cfg;
+            result.new_attrs.push(parse_quote!(#[cfg(all(#cfg, not(#cfg)))]));
+          }
+        },
         SyncAAttribute::Doc(s) => 
           for str in s.split("\n") { 
             docs.push(str.to_string());
           },
         SyncAAttribute::Ignore => result.ignored = true,
-        SyncAAttribute::OnlyAsync => result.only_async = true,
-        SyncAAttribute::OnlySync => result.only_sync = true,
       }
-    }
-
-    let features = &fold.features;
-    if result.only_async {
-      result.new_attrs.push(parse_quote!(#[cfg(#features)]));
-    }
-
-    if result.only_sync {
-      result.new_attrs.push(parse_quote!(#[cfg(not(#features))]));
     }
 
     match result.docs_attribute(docs) {
@@ -83,12 +74,13 @@ mod from {
     let attrs = |is_async| {
       SyncAFoldAttributes::new(
         &SyncAFold { 
+          module_name: "tokio".into(),
           is_async: is_async, 
-          features: parse_quote!(feature = "async"),
           types: HashMap::new(), 
           attributes: HashMap::from([
             (parse_quote!(#[tokio::test]), parse_quote!(#[test]))
-          ])
+          ]),
+          cfg: parse_quote!(feature = "tokio")
         },
         &vec![
           parse_quote!(#[custom]),
@@ -129,12 +121,13 @@ mod from {
     let attrs = |is_ignored| {
       SyncAFoldAttributes::new(
         &SyncAFold { 
+          module_name: "tokio".into(),
           is_async: true, 
-          features: parse_quote!(feature = "async"),
           types: HashMap::new(), 
           attributes: HashMap::from([
             (parse_quote!(#[tokio::test]), parse_quote!(#[test]))
-          ])
+          ]),
+          cfg: parse_quote!(feature = "tokio")
         },
         if is_ignored { &attrs_ignored } else { &attrs_simple }
       )
@@ -142,78 +135,6 @@ mod from {
 
     assert_eq!(attrs(true).ignored, true);
     assert_eq!(attrs(false).ignored, false);
-  }
-
-  #[test]
-  fn only_async() {
-    let new_attrs: Vec<Attribute> = vec![ 
-      parse_quote!(#[custom]), 
-      parse_quote!(#[cfg(feature = "async")]) 
-    ];
-
-    let attrs = |is_async| {
-      SyncAFoldAttributes::new(
-        &SyncAFold { 
-          is_async, 
-          features: parse_quote!(feature = "async"),
-          types: HashMap::new(), 
-          attributes: HashMap::from([
-            (parse_quote!(#[tokio::test]), parse_quote!(#[test]))
-          ])
-        },
-        &vec![ 
-          parse_quote!(#[synca::only(async)]), 
-          parse_quote!(#[custom]) 
-        ]
-      )
-    };
-
-    assert_eq!(attrs(true).only_async, true);
-
-    assert_eq!(
-      attrs(true).new_attrs.iter().map(|x| x.to_token_stream().to_string()).collect::<Vec<_>>(), 
-      new_attrs.iter().map(|x| x.to_token_stream().to_string()).collect::<Vec<_>>()
-    );
-    assert_eq!(
-      attrs(false).new_attrs.iter().map(|x| x.to_token_stream().to_string()).collect::<Vec<_>>(), 
-      new_attrs.iter().map(|x| x.to_token_stream().to_string()).collect::<Vec<_>>()
-    );
-  }
-
-  #[test]
-  fn only_sync() {
-    let new_attrs: Vec<Attribute> = vec![ 
-      parse_quote!(#[custom]), 
-      parse_quote!(#[cfg(not(feature = "async"))]) 
-    ];
-
-    let attrs = |is_async| {
-      SyncAFoldAttributes::new(
-        &SyncAFold { 
-          is_async, 
-          features: parse_quote!(feature = "async"),
-          types: HashMap::new(), 
-          attributes: HashMap::from([
-            (parse_quote!(#[tokio::test]), parse_quote!(#[test]))
-          ])
-        },
-        &vec![ 
-          parse_quote!(#[synca::only(sync)]), 
-          parse_quote!(#[custom]) 
-        ]
-      )
-    };
-
-    assert_eq!(attrs(true).only_sync, true);
-
-    assert_eq!(
-      attrs(true).new_attrs.iter().map(|x| x.to_token_stream().to_string()).collect::<Vec<_>>(), 
-      new_attrs.iter().map(|x| x.to_token_stream().to_string()).collect::<Vec<_>>()
-    );
-    assert_eq!(
-      attrs(false).new_attrs.iter().map(|x| x.to_token_stream().to_string()).collect::<Vec<_>>(), 
-      new_attrs.iter().map(|x| x.to_token_stream().to_string()).collect::<Vec<_>>()
-    );
   }
 
   #[test]
@@ -230,12 +151,13 @@ mod from {
     let attrs = |is_async| {
       SyncAFoldAttributes::new(
         &SyncAFold { 
+          module_name: "sync".into(),
           is_async, 
-          features: parse_quote!(feature = "async"),
           types: HashMap::new(), 
           attributes: HashMap::from([
             (parse_quote!(#[tokio::test]), parse_quote!(#[test]))
-          ])
+          ]),
+          cfg: parse_quote!(feature = "sync")
         },
         &vec![ 
           parse_quote!(#[custom]), 
